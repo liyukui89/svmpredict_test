@@ -1,0 +1,245 @@
+#include <stdio.h>
+#include <conio.h>
+#include <stdlib.h>
+#include <math.h>
+#include "svm_0408.h"
+
+
+
+void main()
+{
+
+	
+	int j,i;
+	int index_value=0;
+	double testY1;
+	int sample_num=12;//训练样本个数为12，前6为一类+1，后6为另一类-1；  
+    int feature_dimn=5;//样本的特征维数为5；
+	struct svm_parameter svmpara=Initialize_svm_parameter();
+	struct svm_model *svmmodel=Malloc( struct svm_model,1);
+	//
+	struct svm_problem svmpro_test;//svm训练数据  
+	struct svm_node node_ij;  
+	struct svm_node node_last;//需要添加最后一维特征的索引为-1  
+	int sv_indiceS[]={1,3,4,9,10,11,12};//
+	double sv_coeF[]={1,0.61749871908358,1,-0.369998244937627,-1,-0.247500474145956,-1};
+	double SVS[6][7]={
+		{-0.6415,2.0535,0.4182, -0.7453, -0.6422,-0.9095,-0.5497},
+		{-0.6415,2.0535,0.4182,-0.7453,-0.6422,-0.9095,-0.5497},
+	    {-0.6415,2.0535, 0.4182,-0.7453,-0.6422,-0.9095,-0.5497},
+	    {-0.6415,2.0535,0.4182,-0.7453,-0.6422,-0.9095,-0.5497},
+		{-0.6415,2.0535,0.4182,-0.7453,-0.6422,-0.9095,-0.5497},
+		/*{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}*/
+	};
+
+	/* 0 if svm_model is created by svm_train */
+	// /* 1 if svm_model is created by svm_load_model*/
+	//测试数据Normalize 与训练数据：
+	double xx[][5]={
+		{1.2648 ,   1.2648 ,   1.2648 ,   1.2648 ,   1.2648},
+		{ -1.0125 ,  -1.0125,   -1.0125 ,  -1.0125 ,  -1.0125},
+		{ -0.8457,   -0.8457,   -0.8457 ,  -0.8457 ,  -0.8457},
+		{-0.2748 ,  -0.2748 ,  -0.2748,   -0.2748 ,  -0.2748},
+		{ -0.6081113066793 ,  -0.608111306679347,   -0.608111306679347,  -0.6081113,   -0.6081113},
+		{-0.5285,   -0.5285,   -0.5285 ,  -0.5285,   -0.5285}	
+	};
+	svmmodel->rho=Malloc( double,1);
+	svmmodel->label=Malloc( int,2);
+	//svmmodel->sv_indices=Malloc( int,19);
+	svmmodel->nSV=Malloc( int,2);
+	svmmodel->sv_coef=Malloc( double*,1);//二维指针，指向数组
+	svmmodel->sv_coef[0]=Malloc( double,7);//二维指针，指向数组，memcopy!
+	//
+	/*svmmodel = Malloc( struct svm_model,1);*/
+	 svmmodel->param = svmpara;
+	 svmmodel->free_sv = 0;
+	//给svm_model参数赋值：
+	 svmmodel->param.svm_type=0;
+	svmmodel->param.kernel_type=2;
+	svmmodel->param.degree=3;
+	svmmodel->param.gamma=0.2;
+	svmmodel->param.coef0=0;
+	//add
+	svmmodel->param.cache_size=1;
+	svmmodel->param.eps=1;
+	svmmodel->param.C=1;
+	svmmodel->param.nr_weight=0;
+	svmmodel->param.weight_label=0;
+	svmmodel->param.weight=0;
+	svmmodel->param.nu=0.5;
+	svmmodel->param.p=0.1;
+	svmmodel->param.shrinking=1;
+	svmmodel->param.probability=0;
+	svmmodel->nr_class=2;
+	svmmodel->l=7;
+	svmmodel->rho[0]=-0.3149049987780;
+	svmmodel->label[0]=1;
+	svmmodel->label[1]=-1;
+	svmmodel->sv_indices=sv_indiceS;//指向数组，不能释放
+	svmmodel->nSV[0]=3;
+	svmmodel->nSV[1]=4;
+	svmmodel->sv_coef[0]=sv_coeF;
+	svmmodel->SV=Malloc( struct svm_node*,7);//指向一个结构体	
+	svmmodel->SV[0]=Malloc( struct svm_node,6);
+	svmmodel->SV[1]=Malloc( struct svm_node,6);
+	svmmodel->SV[2]=Malloc( struct svm_node,6);
+	svmmodel->SV[3]=Malloc( struct svm_node,6);
+	svmmodel->SV[4]=Malloc( struct svm_node,6);
+	svmmodel->SV[5]=Malloc( struct svm_node,6);
+	svmmodel->SV[6]=Malloc( struct svm_node,6);
+	
+	svmmodel->probA=NULL;
+	svmmodel->probB=NULL;
+
+	//------------------------------打印验证-----------------------------------------
+	/*printf("局部地址=%p\n",sv_indiceS);
+	printf("局部地址=%p\n",svmmodel->sv_indices);
+	printf("局部地址=%d\n",svmmodel->sv_indices);*/
+	
+
+	printf("SVM_model.para svm_type =%d\n",svmmodel->param.svm_type);
+	printf("SVM_model.para kernel_type =%d\n",svmmodel->param.kernel_type);
+	printf("SVM_model.para degree =%d\n",svmmodel->param.degree);
+	printf("SVM_model.para gamma =%f\n",svmmodel->param.gamma);
+	printf("SVM_model.para coef0 =%f\n",svmmodel->param.coef0);
+
+	printf("SVM_model.para coef0 =%f\n",svmmodel->param.coef0);
+	//测试数据：定义在上面
+	//svmmodel->SV[j][i].index,svmmodel->SV[j][i].value
+	for ( i=0;i<=feature_dimn;i++){
+		printf("--------\n");
+		index_value+=1;
+		if (i!=feature_dimn){
+			for ( j=0;j<svmmodel->l;j++){
+			svmmodel->SV[j][i].index=index_value;
+			svmmodel->SV[j][i].value=SVS[i][j];//index=1~5
+			printf("SVM_model.SVs[%d][%d]  %d  =%f\n",i,j,svmmodel->SV[j][i].index,svmmodel->SV[j][i].value);//index=1~5
+		   }
+	    }
+		else{
+		  for ( j=0;j<svmmodel->l;j++){
+			svmmodel->SV[j][i].index=-1;//添加index=-1索引;
+			printf("SVM_model.SVs[%d][%d] =%d\n",i,j,svmmodel->SV[j][i].index);//index=1~5
+		   }
+		}
+	}
+	
+
+
+
+    svmpro_test.l=sample_num;  //测试一个
+	/*svmpro_test.x=new svm_node *[sample_num];*/
+	svmpro_test.x=(struct svm_node **)malloc(sizeof(struct svm_node*)*sample_num);
+	for(i=0;i<sample_num;i++){
+	/*svmpro_test.x[i]=new svm_node[feature_dimn+1];  */
+	    svmpro_test.x[i]=(struct svm_node *)malloc(sizeof(struct svm_node)*(feature_dimn+1));
+		for ( j=0;j<feature_dimn;j++)  
+        {  
+          // struct svm_node node_ij;  
+            node_ij.index=j+1;//需要注意的是svm_node的第一个数据的索引为1，数值为第一位特征值，我一开始这里搞错了，把索引搞成从0开始  
+            node_ij.value=xx[i][j]; 
+			
+            svmpro_test.x[i][j]=node_ij;
+		/*	printf("%d\t%f\n",svmpro_test.x[i][j].index,svmpro_test.x[i][j].value);*/
+        }  
+		/*printf("--------------------\n");*/
+      // struct svm_node node_last;//需要添加最后一维特征的索引为-1  
+        node_last.index=-1;  
+        svmpro_test.x[i][feature_dimn]=node_last;  
+	
+	}
+	printf("---------第一组测试样本----------------------\n");
+	printf("测试样本特征=%f\n",svmpro_test.x[0][0].value);
+	printf("测试样本特征=%f\n",svmpro_test.x[0][1].value);
+	printf("测试样本特征=%f\n",svmpro_test.x[0][2].value);
+	printf("测试样本特征=%f\n",svmpro_test.x[0][3].value);
+	printf("测试样本特征=%f\n",svmpro_test.x[0][4].value);
+	printf("  -------------------------------for training: \n");
+	printf("SVM_model.para cache_size =%f\n",svmmodel->param.cache_size);
+	printf("SVM_model.para eps =%f\n",svmmodel->param.eps);
+	printf("SVM_model.para C =%f\n",svmmodel->param.C);
+	printf("SVM_model.para nr_weight =%d\n",svmmodel->param.nr_weight);
+	printf("SVM_model.para weight_label =%d\n",svmmodel->param.weight_label);//*
+	printf("SVM_model.para weight =%f\n",svmmodel->param.weight);//*
+
+	printf("SVM_model.para nu =%f\n",svmmodel->param.nu);//
+	printf("SVM_model.para p =%f\n",svmmodel->param.p);//
+
+	printf("SVM_model.para shrinking =%d\n",svmmodel->param.shrinking);//
+	printf("SVM_model.para probability =%d\n",svmmodel->param.probability);//
+
+	printf("\n");
+	//打印nr_class
+	printf("SVM_model.nr_class  =%d\n",svmmodel->nr_class);//
+	//打印  totalSV
+	printf("SVM_model.totalSV  =%d\n",svmmodel->l);//
+	printf("SVM_model.rho  =%f\n",svmmodel->rho[0]);//
+	printf("SVM_model.Label  =%d\n",svmmodel->label[0]);//
+	printf("SVM_model.Label  =%d\n",svmmodel->label[1]);//
+
+	for ( i=0;i<svmmodel->l;i++)
+		printf("SVM_model.sv_indices[%d]  =%d\n",i,svmmodel->sv_indices[i]);//
+	if (svmmodel->probA!=NULL)
+	   printf("SVM_model.probA  =%f\n",svmmodel->probA);//
+	if (svmmodel->probB!=NULL)
+	printf("SVM_model.probB  =%f\n",svmmodel->probB[0]);//
+	printf("SVM_model.nSV  =%d\n",svmmodel->nSV[0]);//
+	printf("SVM_model.nSV  =%d\n",svmmodel->nSV[1]);//
+	//printf("SVM_model.sv_coef  =%f\n",svmmodel->sv_coef[0][0]);//
+	//printf("SVM_model.sv_coef  =%f\n",svmmodel->sv_coef[0][1]);//
+	//printf("SVM_model.sv_coef  =%f\n",svmmodel->sv_coef[0][2]);//
+	//printf("SVM_model.sv_coef  =%f\n",svmmodel->sv_coef[0][3]);//
+	//printf("SVM_model.sv_coef  =%f\n",svmmodel->sv_coef[0][4]);//
+	//printf("SVM_model.sv_coef  =%f\n",svmmodel->sv_coef[0][5]);//
+	//printf("SVM_model.sv_coef  =%f\n",svmmodel->sv_coef[0][6]);//
+	for ( i=0;i<svmmodel->l;i++)
+		printf("SVM_model.sv_coef[0][%d]  =%f\n",i,svmmodel->sv_coef[0][i]);//
+	
+	for ( i=0;i<feature_dimn;i++){
+		printf("--------\n");
+		for ( j=0;j<svmmodel->l;j++)
+		printf("SVM_model.SVs[%d][%d]  %d  =%f\n",i,j,svmmodel->SV[j][i].index,svmmodel->SV[j][i].value);//index=1~5
+	}
+	
+
+
+	for ( i=0;i<6;i++){
+	
+	 testY1=svm_predict(svmmodel,svmpro_test.x[i]); 
+	 
+	  printf("%d测试预测=%f\n",i,testY1);
+
+	}
+
+	
+	
+
+
+	free(svmmodel->rho);
+	free(svmmodel->label);
+	
+
+	free(svmmodel->nSV);
+
+	
+
+	for ( i=0;i<7;i++)
+		free(svmmodel->SV[i]);
+	free(svmmodel->SV);
+	for ( i=0;i<6;i++)
+	 free(svmpro_test.x[i]);
+
+	 free(svmpro_test.x);
+
+	printf("hello world\n");
+	
+	
+	
+
+
+	
+
+
+	_getch();
+  
+}
