@@ -3,7 +3,13 @@
 
 #define LIBSVM_VERSION 322
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
+/**************************************
+translation:enjoy_learn@126.com
+data:20180409
+author:https://www.csie.ntu.edu.tw/~cjlin/libsvm/
 
+
+***************************************/
 struct svm_node
 {
 	int index;
